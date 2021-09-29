@@ -6,12 +6,6 @@ set -e
 apt update -y
 # nginx
 apt install -y nginx
-service nginx restart
-# Setup firewall
-ufw allow 80
-ufw allow 443
-ufw status verbose
-
 sudo bash -c "cat > /etc/nginx/nginx.conf" << EOL
 user www-data;
 worker_processes auto;
@@ -100,3 +94,9 @@ http {
 #	}
 #}
 EOL
+service nginx restart
+
+# Setup firewall
+ufw allow 80
+ufw allow 443
+ufw status verbose
