@@ -12,7 +12,7 @@ ufw allow 80
 ufw allow 443
 ufw status verbose
 
-sudo bash -c "cat > /etc/nginx/sites-available/$REGISTRY_NAME.$BASE_DOMAIN" << EOL
+sudo bash -c "cat > /etc/nginx/nginx.conf" << EOL
 user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
@@ -77,4 +77,26 @@ http {
 	include /etc/nginx/conf.d/*.conf;
 	include /etc/nginx/sites-enabled/*;
 }
+
+
+#mail {
+#	# See sample authentication script at:
+#	# http://wiki.nginx.org/ImapAuthenticateWithApachePhpScript
+#
+#	# auth_http localhost/auth.php;
+#	# pop3_capabilities "TOP" "USER";
+#	# imap_capabilities "IMAP4rev1" "UIDPLUS";
+#
+#	server {
+#		listen     localhost:110;
+#		protocol   pop3;
+#		proxy      on;
+#	}
+#
+#	server {
+#		listen     localhost:143;
+#		protocol   imap;
+#		proxy      on;
+#	}
+#}
 EOL
