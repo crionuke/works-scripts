@@ -21,10 +21,13 @@ ln -s $VOLUME_DIR/var/lib/docker /var/lib/docker
 systemctl start docker
 
 # Nginx to volume
+mkdir -p $VOLUME_DIR/etc/nginx/htpasswd
 mkdir -p $VOLUME_DIR/etc/nginx/sites-available
 mkdir -p $VOLUME_DIR/etc/nginx/sites-enabled
+mv /etc/nginx/htpasswd $VOLUME_DIR/etc/nginx/
 mv /etc/nginx/sites-available $VOLUME_DIR/etc/nginx/
 mv /etc/nginx/sites-enabled $VOLUME_DIR/etc/nginx/
+ln -s $VOLUME_DIR/etc/nginx/htpasswd /etc/nginx/htpasswd
 ln -s $VOLUME_DIR/etc/nginx/sites-available /etc/nginx/sites-available
 ln -s $VOLUME_DIR/etc/nginx/sites-enabled /etc/nginx/sites-enabled
 

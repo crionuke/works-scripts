@@ -34,14 +34,8 @@ EOF
 chmod 700 .env
 source .env
 
-# Setup structure
-mkdir -p htpasswd
 mkdir -p data
 
-# Generate credential
-htpasswd -bBc htpasswd/passwords $REGISTRY_NAME $PASSWORD
-
-#
 cat > docker-compose.yaml << EOL
 version: '3'
 
@@ -51,12 +45,8 @@ services:
     ports:
       - "${PRIVATE_IP}:${SERVER_PORT}:5000"
     environment:
-      REGISTRY_AUTH: htpasswd
-      REGISTRY_AUTH_HTPASSWD_REALM: $REGISTRY_NAME
-      REGISTRY_AUTH_HTPASSWD_PATH: /htpasswd/passwords
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
     volumes:
-      - ./htpasswd:/htpasswd
       - ./data:/data
     restart: unless-stopped
 EOL
@@ -77,6 +67,10 @@ chmod u+x restart.sh
 # Add server to nginx
 sudo mkdir -p /var/www/$REGISTRY_NAME.$BASE_DOMAIN/html
 sudo chmod -R 755 /var/www/$REGISTRY_NAME.$BASE_DOMAIN
+# Generate credential
+sudo mkdir -p /etc/nginx/htpasswd
+sudo htpasswd -bBc /etc/nginx/htpasswd/.$REGISTRY_NAME.$BASE_DOMAIN $REGISTRY_NAME $PASSWORD
+# Create virtualhost
 sudo bash -c "cat > /etc/nginx/sites-available/$REGISTRY_NAME.$BASE_DOMAIN" << EOL
 server {
     listen 80;
@@ -84,6 +78,8 @@ server {
     index index.html index.htm index.nginx-debian.html;
     server_name $REGISTRY_NAME.$BASE_DOMAIN;
     location / {
+        auth_basic                          "$REGISTRY_NAME.$BASE_DOMAIN";
+        auth_basic_user_file                /etc/nginx/htpasswd/.$REGISTRY_NAME.$BASE_DOMAIN;
         proxy_pass                          http://$PRIVATE_IP:${SERVER_PORT};
         proxy_set_header  Host              \$http_host;
         proxy_set_header  X-Real-IP         \$remote_addr;
