@@ -8,7 +8,7 @@ BASE_DOMAIN=$2
 SERVER_PORT=$3
 
 if [ -z "$JENKINS_NAME" -o -z "$BASE_DOMAIN" -o -z "$SERVER_PORT" ]; then
-  echo "Usage: ./install_jenkins.sh <JENKINS_NAME> <base_domain> <server_port>"
+  echo "Usage: ./install_jenkins.sh <jenkins_name> <base_domain> <server_port>"
   exit 1
 fi
 
@@ -81,7 +81,7 @@ server {
     location / {
         auth_basic                          "$JENKINS_NAME.$BASE_DOMAIN";
         auth_basic_user_file                /etc/nginx/htpasswd/.$JENKINS_NAME.$BASE_DOMAIN;
-        # Don't forward auth to Tomcat
+        # Don't forward auth
         proxy_set_header                    Authorization "";
         proxy_pass                          http://$PRIVATE_IP:${SERVER_PORT};
     }
