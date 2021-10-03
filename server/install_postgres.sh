@@ -22,7 +22,10 @@ pushd $POSTGRES_NAME
 # Env
 cat > .env << EOF
 POSTGRES_NAME=$POSTGRES_NAME
+POSTGRES_IPADDR=$POSTGRES_IPADDR
 POSTGRES_PORT=$POSTGRES_PORT
+POSTGRES_DB=$POSTGRES_NAME
+POSTGRES_USER=$POSTGRES_NAME
 POSTGRES_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 PRIVATE_INET=$(ip route | grep eth1 | awk '{print $1}')
 PRIVATE_IP=$(ip route | grep eth1 | awk '{print $9}')
