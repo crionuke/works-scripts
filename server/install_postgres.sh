@@ -8,7 +8,7 @@ POSTGRES_IPADDR=${2:-0.0.0.0}
 POSTGRES_PORT=${3:-5432}
 
 if [ -z "$POSTGRES_NAME" ]; then
-  echo "Usage: ./install_postgres.sh <postgres_name> <postgres_ipaddr:-0.0.0.0)> <postgres_port:-5432>"
+  echo "Usage: ./install_postgres.sh <postgres_name> <postgres_ipaddr:-0.0.0.0> <postgres_port:-5432>"
   exit 1
 fi
 
