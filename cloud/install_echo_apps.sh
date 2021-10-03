@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ECHO_APPS_HOSTNAME=$1
 
