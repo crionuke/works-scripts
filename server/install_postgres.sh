@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-# Setup postgres with self-signed cert
+# Install postgres with docker-compose
 
-POSTGRES_NAME=${1:-service}
-POSTGRES_IPADDR=${3:-0.0.0.0}
-POSTGRES_PORT=${4:-5432}
+POSTGRES_NAME=$1
+POSTGRES_IPADDR=${2:-0.0.0.0}
+POSTGRES_PORT=${3:-5432}
 
-if [ -z "$POSTGRES_NAME" -o -z "$POSTGRES_IPADDR" -o -z "$POSTGRES_PORT" ]; then
-  echo "Usage: ./install_postgres.sh <postgres_name> <postgres_ipaddr> <postgres_port>"
+if [ -z "$POSTGRES_NAME" ]; then
+  echo "Usage: ./install_postgres.sh <postgres_name> <postgres_ipaddr:-0.0.0.0)> <postgres_port:-5432>"
   exit 1
 fi
 
@@ -57,7 +57,7 @@ cat > docker-compose.yaml << EOL
 version: '3'
 
 services:
-  postgresql:
+  postgres:
     image: postgres
     command: -c ssl=on \
       -c ssl_cert_file=/var/lib/postgresql/server.crt \

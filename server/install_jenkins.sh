@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-# Setup jenkins with docker-compose beneath nginx with ssl by letsencrypt and secured by htpasswd
+# Install jenkins with docker-compose beneath nginx with ssl by letsencrypt and secured by htpasswd
 
 JENKINS_NAME=$1
 BASE_DOMAIN=$2
-SERVER_PORT=$3
+JENKINS_PORT=${3:-8080}
 
-if [ -z "$JENKINS_NAME" -o -z "$BASE_DOMAIN" -o -z "$SERVER_PORT" ]; then
-  echo "Usage: ./install_jenkins.sh <jenkins_name> <base_domain> <server_port>"
+if [ -z "$JENKINS_NAME" -o -z "$BASE_DOMAIN" ]; then
+  echo "Usage: ./install_jenkins.sh <jenkins_name> <base_domain> <jenkins_port:-8080>"
   exit 1
 fi
 
@@ -25,7 +25,7 @@ sudo apt install -y apache2-utils
 # Env
 cat > .env << EOF
 JENKINS_NAME=$JENKINS_NAME
-SERVER_PORT=$SERVER_PORT
+JENKINS_PORT=$JENKINS_PORT
 BASE_DOMAIN=$BASE_DOMAIN
 PRIVATE_INET=$(ip route | grep eth1 | awk '{print $1}')
 PRIVATE_IP=$(ip route | grep eth1 | awk '{print $9}')
@@ -45,7 +45,7 @@ services:
     privileged: true
     user: root
     ports:
-      - "${PRIVATE_IP}:${SERVER_PORT}:8080"
+      - "${PRIVATE_IP}:${JENKINS_PORT}:8080"
     volumes:
       - ./data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
@@ -83,7 +83,7 @@ server {
         auth_basic_user_file                /etc/nginx/htpasswd/.$JENKINS_NAME.$BASE_DOMAIN;
         # Don't forward auth
         proxy_set_header                    Authorization "";
-        proxy_pass                          http://$PRIVATE_IP:${SERVER_PORT};
+        proxy_pass                          http://$PRIVATE_IP:${JENKINS_PORT};
     }
 }
 EOL

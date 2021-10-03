@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-# Setup docker registry with docker-compose beneath nginx with ssl by letsencrypt and secured by htpasswd
+# Install docker registry with docker-compose beneath nginx with ssl by letsencrypt and secured by htpasswd
 
 REGISTRY_NAME=$1
 BASE_DOMAIN=$2
-SERVER_PORT=$3
+REGISTRY_PORT=${3:-5000}
 
-if [ -z "$REGISTRY_NAME" -o -z "$BASE_DOMAIN" -o -z "$SERVER_PORT" ]; then
-  echo "Usage: ./install_registry.sh <registry_name> <base_domain> <server_port>"
+if [ -z "$REGISTRY_NAME" -o -z "$BASE_DOMAIN" ]; then
+  echo "Usage: ./install_registry.sh <registry_name> <base_domain> <registry_port:-5000>"
   exit 1
 fi
 
@@ -25,7 +25,7 @@ sudo apt install -y apache2-utils
 # Env
 cat > .env << EOF
 REGISTRY_NAME=$REGISTRY_NAME
-SERVER_PORT=$SERVER_PORT
+REGISTRY_PORT=$REGISTRY_PORT
 BASE_DOMAIN=$BASE_DOMAIN
 PRIVATE_INET=$(ip route | grep eth1 | awk '{print $1}')
 PRIVATE_IP=$(ip route | grep eth1 | awk '{print $9}')
@@ -43,7 +43,7 @@ services:
   registry:
     image: registry:2
     ports:
-      - "${PRIVATE_IP}:${SERVER_PORT}:5000"
+      - "${PRIVATE_IP}:${REGISTRY_PORT}:5000"
     environment:
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
     volumes:
@@ -80,7 +80,7 @@ server {
     location / {
         auth_basic                          "$REGISTRY_NAME.$BASE_DOMAIN";
         auth_basic_user_file                /etc/nginx/htpasswd/.$REGISTRY_NAME.$BASE_DOMAIN;
-        proxy_pass                          http://$PRIVATE_IP:${SERVER_PORT};
+        proxy_pass                          http://$PRIVATE_IP:${REGISTRY_PORT};
         proxy_set_header  Host              \$http_host;
         proxy_set_header  X-Real-IP         \$remote_addr;
         proxy_set_header  X-Forwarded-For   \$proxy_add_x_forwarded_for;
