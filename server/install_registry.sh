@@ -5,15 +5,15 @@ set -e
 
 REGISTRY_NAME=$1
 BASE_DOMAIN=$2
-REGISTRY_PORT=${3:-5000}
+REGISTRY_UI_PORT=${3:-8080}
 
 if [ -z "$REGISTRY_NAME" -o -z "$BASE_DOMAIN" ]; then
-  echo "Usage: ./install_registry.sh <registry_name> <base_domain> <registry_port:-5000>"
+  echo "Usage: ./install_registry.sh <registry_name> <base_domain> <registry_ui_port:-8080>"
   exit 1
 fi
 
 if [ -d "$REGISTRY_NAME" ]; then
-  rm -rf $REGISTRY_NAME
+  sudo rm -rf $REGISTRY_NAME
 fi
 mkdir $REGISTRY_NAME
 
@@ -25,11 +25,11 @@ sudo apt install -y apache2-utils
 # Env
 cat > .env << EOF
 REGISTRY_NAME=$REGISTRY_NAME
-REGISTRY_PORT=$REGISTRY_PORT
-BASE_DOMAIN=$BASE_DOMAIN
+REGISTRY_URL=$REGISTRY_NAME.$BASE_DOMAIN
+REGISTRY_USERNAME=$REGISTRY_NAME
+REGISTRY_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 PRIVATE_INET=$(ip route | grep eth1 | awk '{print $1}')
 PRIVATE_IP=$(ip route | grep eth1 | awk '{print $9}')
-PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 EOF
 chmod 700 .env
 source .env
@@ -38,17 +38,30 @@ mkdir -p data
 
 cat > docker-compose.yaml << EOL
 version: '3'
-
 services:
   registry:
     image: registry:2
-    ports:
-      - "${PRIVATE_IP}:${REGISTRY_PORT}:5000"
     environment:
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
     volumes:
       - ./data:/data
+    networks:
+      - registry-net
     restart: unless-stopped
+  ui:
+    image: joxit/docker-registry-ui:latest
+    ports:
+      - "${PRIVATE_IP}:${REGISTRY_UI_PORT}:80"
+    environment:
+      - REGISTRY_TITLE=$REGISTRY_NAME
+      - NGINX_PROXY_PASS_URL=http://registry:5000
+      - SINGLE_REGISTRY=true
+    depends_on:
+      - registry
+    networks:
+      - registry-net
+networks:
+  registry-net:
 EOL
 
 # Ctl
@@ -69,7 +82,7 @@ sudo mkdir -p /var/www/$REGISTRY_NAME.$BASE_DOMAIN/html
 sudo chmod -R 755 /var/www/$REGISTRY_NAME.$BASE_DOMAIN
 # Generate credential
 sudo mkdir -p /etc/nginx/htpasswd
-sudo htpasswd -bBc /etc/nginx/htpasswd/.$REGISTRY_NAME.$BASE_DOMAIN $REGISTRY_NAME $PASSWORD
+sudo htpasswd -bBc /etc/nginx/htpasswd/.$REGISTRY_NAME.$BASE_DOMAIN $REGISTRY_NAME $REGISTRY_PASSWORD
 # Create virtualhost
 sudo bash -c "cat > /etc/nginx/sites-available/$REGISTRY_NAME.$BASE_DOMAIN" << EOL
 server {
@@ -80,7 +93,7 @@ server {
     location / {
         auth_basic                          "$REGISTRY_NAME.$BASE_DOMAIN";
         auth_basic_user_file                /etc/nginx/htpasswd/.$REGISTRY_NAME.$BASE_DOMAIN;
-        proxy_pass                          http://$PRIVATE_IP:${REGISTRY_PORT};
+        proxy_pass                          http://$PRIVATE_IP:${REGISTRY_UI_PORT};
         proxy_set_header  Host              \$http_host;
         proxy_set_header  X-Real-IP         \$remote_addr;
         proxy_set_header  X-Forwarded-For   \$proxy_add_x_forwarded_for;
