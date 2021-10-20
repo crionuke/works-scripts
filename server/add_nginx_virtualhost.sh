@@ -29,5 +29,5 @@ sudo ln -f -s /etc/nginx/sites-available/$DOMAIN_NAME /etc/nginx/sites-enabled/
 sudo service nginx reload
 # Certbot
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d $DOMAIN_NAME
+sudo certbot --nginx -d $DOMAIN_NAME -d www.$DOMAIN_NAME
 
