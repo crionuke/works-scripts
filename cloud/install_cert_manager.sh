@@ -15,8 +15,11 @@ helm upgrade cert-manager jetstack/cert-manager \
   --install \
   --create-namespace \
   --namespace cert-manager \
-  --version v1.5.3 \
-  --set installCRDs=true
+  --set installCRDs=true \
+  --set ingressShim.defaultIssuerName=letsencrypt-prod \
+  --set ingressShim.defaultIssuerKind=ClusterIssuer \
+  --set ingressShim.defaultIssuerGroup=cert-manager.io
+
 
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
@@ -29,24 +32,7 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory
     email: $LETSENCRYPT_EMAIL
     privateKeySecretRef:
-      name: letsencrypt-p
-      rod-private-key
-    solvers:
-      - http01:
-          ingress:
-            class: nginx
----
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-staging
-  namespace: cert-manager
-spec:
-  acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: $LETSENCRYPT_EMAIL
-    privateKeySecretRef:
-      name: letsencrypt-staging-private-key
+      name: letsencrypt-prod
     solvers:
       - http01:
           ingress:
